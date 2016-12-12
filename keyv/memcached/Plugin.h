@@ -30,6 +30,8 @@ namespace memcached
 {
 namespace
 {
+const size_t MGET_BATCH_SIZE( 10000 );
+
 memcached_st* _getInstance( const servus::URI& uri )
 {
     const std::string& host = uri.getHost();
@@ -186,38 +188,47 @@ private:
     template< typename F, typename T >
     void _multiGet( const Strings& keys, const F& func, const T& getFunc ) const
     {
-        std::vector< const char* > keysArray;
-        std::vector< size_t > keyLengths;
-        keysArray.reserve( keys.size( ));
-        keyLengths.reserve( keys.size( ));
-        std::unordered_map< std::string, std::string > hashes;
-        Strings hashCopy;
-        hashCopy.reserve( keys.size( ));
-
-        for( const auto& key : keys )
+        for( auto i = keys.begin(); i < keys.end();  )
         {
-            const std::string& hash = _hash( key );
-            hashes[hash] = key;
-            hashCopy.push_back( hash );
-            keysArray.push_back( hashCopy.back().c_str( ));
-            keyLengths.push_back( hashCopy.back().length( ));
-        }
+            std::vector< const char* > keysArray;
+            std::vector< size_t > keyLengths;
+            const size_t nKeys = std::min( MGET_BATCH_SIZE, keys.size( ));
+            keysArray.reserve( nKeys );
+            keyLengths.reserve(  nKeys );
+            std::unordered_map< std::string, std::string > hashes;
+            Strings hashCopy;
+            hashCopy.reserve( nKeys );
 
-        memcached_return ret = memcached_mget( _instance, keysArray.data(),
-                                               keyLengths.data(),
-                                               keysArray.size( ));
-        memcached_result_st* fetched;
-        while( (fetched = memcached_fetch_result( _instance, nullptr, &ret )) )
-        {
-            if( ret == MEMCACHED_SUCCESS )
+            for( auto j = i; j < keys.end() && size_t( j-i ) < MGET_BATCH_SIZE;
+                 ++j, ++i )
             {
-                const std::string key( memcached_result_key_value( fetched ),
-                                       memcached_result_key_length( fetched ));
-                const size_t size = memcached_result_length( fetched );
-                const auto& result = getFunc( fetched, size );
-                func( hashes[key], result.first, result.second );
+                const std::string& hash = _hash( *j );
+                hashes[hash] = *j;
+                hashCopy.push_back( hash );
+                keysArray.push_back( hashCopy.back().c_str( ));
+                keyLengths.push_back( hashCopy.back().length( ));
             }
-            memcached_result_free( fetched );
+
+            memcached_return ret = memcached_mget( _instance, keysArray.data(),
+                                                   keyLengths.data(),
+                                                   keysArray.size( ));
+            memcached_result_st* fetched;
+            while( (fetched = memcached_fetch_result( _instance, nullptr,
+                                                      &ret )))
+            {
+                if( ret == MEMCACHED_SUCCESS )
+                {
+                    const std::string key(
+                        memcached_result_key_value( fetched ),
+                        memcached_result_key_length( fetched ));
+
+                    // fetch size before result, result will reset size to 0
+                    const size_t size = memcached_result_length( fetched );
+                    const auto& result = getFunc( fetched, size );
+                    func( hashes[key], result.first, result.second );
+                }
+                memcached_result_free( fetched );
+            }
         }
     }
 
