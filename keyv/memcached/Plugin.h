@@ -19,9 +19,7 @@
 
 #ifdef KEYV_USE_LIBMEMCACHED
 #include <libmemcached/memcached.h>
-#include <pression/data/CompressorRLE.h>
 #include <pression/data/CompressorSnappy.h>
-#include <pression/data/CompressorZSTD.h>
 #include <pression/data/Registry.h>
 #include <unordered_map>
 #include <utility>
@@ -277,7 +275,8 @@ private:
 
     std::string _hash( const std::string& key ) const
     {
-        return servus::make_uint128( key + _compressor.getName( )).getString();
+        return servus::make_uint128( key + _compressor.getName() +
+                                     "8k" ).getString();
     }
 
     memcached_st* const _instance;
