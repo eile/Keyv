@@ -316,14 +316,13 @@ private:
     // appended to the key to avoid name clashes.
     std::string _hash(const std::string& key) const
     {
-        return lunchbox::uint128_t( _namespace +
-            servus::make_uint128( key + _compressor.getName( )).getString();
+        return ( _namespace +
+                 servus::make_uint128( key + _compressor.getName( )).getString();
     }
 #else
     std::string _hash(const std::string& key) const
     {
-        return lunchbox::uint128_t(_namespace + servus::make_uint128(key))
-            .getString();
+        return ( _namespace + servus::make_uint128( key )).getString();
     }
 #endif
 
