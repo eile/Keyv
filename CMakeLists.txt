@@ -21,6 +21,7 @@ set(COMMON_PROJECT_DOMAIN ch.epfl.bluebrain)
 include(Common)
 
 common_find_package(Boost REQUIRED COMPONENTS unit_test_framework)
+common_find_package(Extra REQUIRED)
 common_find_package(Lunchbox REQUIRED)
 common_find_package(Pression REQUIRED)
 common_find_package(Servus REQUIRED)

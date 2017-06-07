@@ -176,7 +176,7 @@ private:
         librados::bufferlist bl;
     };
 
-    typedef stde::hash_map<std::string, AsyncRead> ReadMap;
+    typedef std::unordered_map<std::string, AsyncRead> ReadMap;
     typedef std::deque<librados::AioCompletion*> Writes;
 
     mutable ReadMap _reads;

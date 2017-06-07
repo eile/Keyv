@@ -1,5 +1,5 @@
 
-/* Copyright (c) 2014-2016, Stefan.Eilemann@epfl.ch
+/* Copyright (c) 2014-2017, Stefan.Eilemann@epfl.ch
  *
  * This file is part of Keyv <https://github.com/BlueBrain/Keyv>
  *
@@ -31,7 +31,7 @@
 #define TEST_RUNTIME 240 // seconds
 #include <keyv/Map.h>
 
-#include <lunchbox/clock.h>
+#include <extra/Clock.h>
 #include <lunchbox/os.h>
 #include <lunchbox/rng.h>
 #include <lunchbox/test.h>
@@ -240,7 +240,7 @@ void benchmark(const std::string& uriStr, const uint64_t queueDepth,
         value[i] = rng.get<char>();
 
     // write performance
-    lunchbox::Clock clock;
+    extra::Clock clock;
     uint64_t i = 0;
     while (clock.getTime64() < loopTime || i <= queueDepth)
     {
