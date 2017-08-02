@@ -82,9 +82,14 @@ Map::~Map()
 MapPtr Map::createCache()
 {
     const servus::URI memcachedURI("memcached://");
-    if (::getenv("MEMCACHED_SERVERS") && handles(memcachedURI))
-        return MapPtr(new Map(servus::URI(memcachedURI)));
-
+    if (::getenv("MEMCACHED_SERVERS"))
+    {
+        if (handles(memcachedURI))
+            return MapPtr(new Map(servus::URI(memcachedURI)));
+        else
+            LBWARN << "Missing memcached dependency for MEMCACHED_SERVERS cache"
+                   << std::endl;
+    }
     const char* leveldb = ::getenv("LEVELDB_CACHE");
     if (leveldb && handles(servus::URI("leveldb://")))
         return MapPtr(new Map(
